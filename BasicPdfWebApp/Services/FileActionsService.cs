@@ -14,39 +14,34 @@ namespace BasicPdfWebApp.Services
     {
         #region Auxiliares
 
-        private void SaveFile(PDFDoc doc, string fileName, FileNameOptionEnum fileNameOption)
-        {
-            doc.Save(
-                FileUtils.GetNewFileName(
-                    FileUtils.GetFilePath(string.Empty) + fileName,
-                    fileNameOption),
-                SDFDoc.SaveOptions.e_linearized);
-        }
-
         #endregion
 
-        public void CombineFiles(List<FileItemEntity> fileItems)
+        public FileItemDTO CombineFiles(List<FileItemEntity> fileItems)
         {
             try
             {
-                using (PDFDoc new_doc = new PDFDoc())
+                using (PDFDoc doc = new PDFDoc())
                 {
-                    new_doc.InitSecurityHandler();
+                    doc.InitSecurityHandler();
 
                     var fileNewName = new StringBuilder();
 
-                    foreach (var item in fileItems)
+                    foreach (var fileItem in fileItems)
                     {
                         if (fileNewName.Length > 0)
                             fileNewName.Append("_");
 
-                        fileNewName.Append(item.FileName.TrimEnd(".pdf".ToCharArray()));
+                        fileNewName.Append(fileItem.FileName.TrimEnd(".pdf".ToCharArray()));
 
-                        using (PDFDoc in_doc = new PDFDoc(item.FileFullPath))
+                        fileItem.FileFullPath = FileUtils.GetDefaultInputPath() + fileItem.FileName;
+
+                        File.WriteAllBytes(fileItem.FileFullPath, fileItem.Bytes);
+
+                        using (PDFDoc in_doc = new PDFDoc(fileItem.FileFullPath))
                         {
                             in_doc.InitSecurityHandler();
 
-                            new_doc.InsertPages(new_doc.GetPageCount() + 1, in_doc, 1, in_doc.GetPageCount(), PDFDoc.InsertFlag.e_none);
+                            doc.InsertPages(doc.GetPageCount() + 1, in_doc, 1, in_doc.GetPageCount(), PDFDoc.InsertFlag.e_none);
                         }
                     }
 
@@ -68,7 +63,16 @@ namespace BasicPdfWebApp.Services
                     //}
                     #endregion
 
-                    SaveFile(new_doc, fileNewName.ToString(), FileNameOptionEnum.Convert);
+                    var fileItemDTO = new FileItemDTO()
+                    {
+                        Id = new Random().Next(1, 100),
+                        FileFullPath = FileUtils.GetNewFileName(fileNewName.ToString(), FileNameOptionEnum.Combine)
+                    };
+                    fileItemDTO.FileName = FileUtils.GetSafeFileName(fileItemDTO.FileFullPath);
+
+                    doc.Save(fileItemDTO.FileFullPath, SDFDoc.SaveOptions.e_linearized);
+                    
+                    return fileItemDTO;
                 }
             }
             catch (PDFNetException ex)
@@ -94,23 +98,34 @@ namespace BasicPdfWebApp.Services
             };
             fileItemDTO.FileName = FileUtils.GetSafeFileName(fileItemDTO.FileFullPath);
 
-            using (PDFDoc doc = new PDFDoc(fileItem.FileFullPath))
+            using (PDFDoc in_doc = new PDFDoc(fileItem.FileFullPath))
             {
-                Optimizer.Optimize(doc);
+                Optimizer.Optimize(in_doc);
 
-                using (PDFDoc newDoc = new PDFDoc())
+                using (PDFDoc doc = new PDFDoc())
                 {
-                    newDoc.InsertPages(newDoc.GetPageCount() + 1, doc, 1, doc.GetPageCount(), PDFDoc.InsertFlag.e_none);
+                    doc.InsertPages(doc.GetPageCount() + 1, in_doc, 1, in_doc.GetPageCount(), PDFDoc.InsertFlag.e_none);
 
-                    SaveFile(newDoc, fileItemDTO.FileFullPath, FileNameOptionEnum.Compress);
+                    in_doc.Save(fileItemDTO.FileFullPath, SDFDoc.SaveOptions.e_linearized);
                 }
             }
 
             return fileItemDTO;
         }
 
-        public void ProtectFile(FileItemEntity fileItem)
+        public FileItemDTO ProtectFile(FileItemEntity fileItem)
         {
+            fileItem.FileFullPath = FileUtils.GetDefaultInputPath() + fileItem.FileName;
+
+            File.WriteAllBytes(fileItem.FileFullPath, fileItem.Bytes);
+
+            var fileItemDTO = new FileItemDTO()
+            {
+                Id = fileItem.Id,
+                FileFullPath = FileUtils.GetNewFileName(fileItem.FileName, FileNameOptionEnum.Protect)
+            };
+            fileItemDTO.FileName = FileUtils.GetSafeFileName(fileItemDTO.FileFullPath);
+
             using (PDFDoc doc = new PDFDoc(fileItem.FileFullPath))
             {
                 SecurityHandler new_handler = new SecurityHandler(SecurityHandler.AlgorithmType.e_AES_256);
@@ -123,12 +138,25 @@ namespace BasicPdfWebApp.Services
 
                 doc.SetSecurityHandler(new_handler);
 
-                SaveFile(doc, fileItem.FileFullPath, FileNameOptionEnum.Encrypt);
+                doc.Save(fileItemDTO.FileFullPath, SDFDoc.SaveOptions.e_linearized);
             }
+
+            return fileItemDTO;
         }
 
-        public void ConvertFileToPDF(FileItemEntity fileItem)
+        public FileItemDTO ConvertFileToPDF(FileItemEntity fileItem)
         {
+            fileItem.FileFullPath = FileUtils.GetDefaultInputPath() + fileItem.FileName;
+
+            File.WriteAllBytes(fileItem.FileFullPath, fileItem.Bytes);
+
+            var fileItemDTO = new FileItemDTO()
+            {
+                Id = fileItem.Id,
+                FileFullPath = FileUtils.GetNewFileName(fileItem.FileName, FileNameOptionEnum.Convert)
+            };
+            fileItemDTO.FileName = FileUtils.GetSafeFileName(fileItemDTO.FileFullPath);
+
             using (PDFDoc doc = new PDFDoc())
             {
                 try
@@ -142,7 +170,7 @@ namespace BasicPdfWebApp.Services
                         case FileType.HTML:
                             HTML2PDF converter = new HTML2PDF();
 
-                            var htmlString = System.IO.File.ReadAllText(fileItem.FileFullPath);
+                            var htmlString = File.ReadAllText(fileItem.FileFullPath);
 
                             converter.InsertFromHtmlString(htmlString);
 
@@ -160,7 +188,9 @@ namespace BasicPdfWebApp.Services
                             break;
                     }
 
-                    SaveFile(doc, fileItem.FileFullPath, FileNameOptionEnum.Convert);
+                    doc.Save(fileItemDTO.FileFullPath, SDFDoc.SaveOptions.e_linearized);
+
+                    return fileItemDTO;
                 }
                 catch (PDFNetException ex)
                 {

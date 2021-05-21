@@ -30,18 +30,28 @@ namespace BasicPdfWebApp.Controllers
         }
 
         [HttpPost("combine")]
-        public BaseResponseModel<FileItemDTO> CombineFiles(List<FileItemDTO> fileItemDTOs)
+        public BaseResponseModel<FileItemDTO> CombineFiles(IFormFileCollection formFileCollection)
         {
             var fileItemEntities = new List<FileItemEntity>();
-            iMapper.Map(fileItemDTOs, fileItemEntities);
 
-            _fileActionsService.CombineFiles(fileItemEntities);
+            foreach (var formFile in Request.Form.Files)
+            {
+                fileItemEntities.Add(new FileItemEntity()
+                {
+                    Id = new Random().Next(0, 200),
+                    Guid = new Guid(),
+                    Bytes = formFile.GetBytesFromFormFile(),
+                    FileName = formFile.FileName
+                });
+            }
 
-            return new BaseResponseModel<FileItemDTO>() { message = "sucesso", executionDate = System.DateTime.Now };
+            var fileItemDTO = _fileActionsService.CombineFiles(fileItemEntities);
+
+            return new BaseResponseModel<FileItemDTO>() { message = "sucesso", executionDate = DateTime.Now, data = fileItemDTO };
         }
 
         [HttpPost("compress")]
-        public BaseResponseModel<FileItemDTO> PostFileItem([FromForm] IFormFile inputFormFile)
+        public BaseResponseModel<FileItemDTO> CompressFile([FromForm] IFormFile inputFormFile)
         {
             var formFile = Request.Form.Files[0];
 
@@ -59,25 +69,39 @@ namespace BasicPdfWebApp.Controllers
         }
 
         [HttpPost("protect")]
-        public BaseResponseModel<FileItemDTO> ProtectFile(FileItemDTO fileItemDTO)
+        public BaseResponseModel<FileItemDTO> ProtectFile([FromForm] IFormFile inputFormFile)
         {
-            var fileItemEntity = new FileItemEntity();
-            iMapper.Map(fileItemDTO, fileItemEntity);
+            var formFile = Request.Form.Files[0];
 
-            _fileActionsService.ProtectFile(fileItemEntity);
+            var fileItemEntity = new FileItemEntity()
+            {
+                Id = new Random().Next(0, 200),
+                Guid = new Guid(),
+                Bytes = formFile.GetBytesFromFormFile(),
+                FileName = formFile.FileName
+            };
 
-            return new BaseResponseModel<FileItemDTO>() { message = "sucesso", executionDate = System.DateTime.Now };
+            var fileItemDTO = _fileActionsService.ProtectFile(fileItemEntity);
+
+            return new BaseResponseModel<FileItemDTO>() { message = "sucesso", executionDate = DateTime.Now, data = fileItemDTO };
         }
 
         [HttpPost("convert/topdf")]
-        public BaseResponseModel<FileItemDTO> ConvertFileToPDF(FileItemDTO fileItemDTO)
+        public BaseResponseModel<FileItemDTO> ConvertFileToPDF([FromForm] IFormFile inputFormFile)
         {
-            var fileItemEntity = new FileItemEntity();
-            iMapper.Map(fileItemDTO, fileItemEntity);
+            var formFile = Request.Form.Files[0];
 
-            _fileActionsService.ConvertFileToPDF(fileItemEntity);
+            var fileItemEntity = new FileItemEntity()
+            {
+                Id = new Random().Next(0, 200),
+                Guid = new Guid(),
+                Bytes = formFile.GetBytesFromFormFile(),
+                FileName = formFile.FileName
+            };
 
-            return new BaseResponseModel<FileItemDTO>() { message = "sucesso", executionDate = System.DateTime.Now };
+            var fileItemDTO = _fileActionsService.ConvertFileToPDF(fileItemEntity);
+
+            return new BaseResponseModel<FileItemDTO>() { message = "sucesso", executionDate = DateTime.Now, data = fileItemDTO };
         }
     }
 }

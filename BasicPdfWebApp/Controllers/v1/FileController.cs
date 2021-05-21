@@ -96,25 +96,6 @@ namespace BasicPdfWebApp.Controllers
                 ItemToDTO(fileItem));
         }
 
-        [HttpPost("new")]
-        public FileItemDTO PostFileItem([FromForm] IFormFile inputFormFile)
-        {
-            var formFile = Request.Form.Files[0];
-
-            var fileItemEntity = new FileItemEntity()
-            {
-                Id = new Random().Next(0, 200),
-                Guid = new Guid(),
-                Bytes = formFile.GetBytesFromFormFile(),
-                FileName = formFile.FileName
-            };
-
-            var fileItemDTO = new FileItemDTO();
-            iMapper. Map(fileItemEntity, fileItemDTO);
-
-            return fileItemDTO;
-        }
-
         // DELETE: api/File/5
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteFileItem(int id)

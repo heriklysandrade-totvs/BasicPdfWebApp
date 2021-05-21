@@ -38,10 +38,10 @@ namespace BasicPdfWebApp.Utils
                 case FileNameOptionEnum.Copy:
                     return GetFilePath(fullFileName, useDefaultPath) + $"{fullFileName.Split("\\").Last().TrimEnd(".pdf".ToCharArray())}_copy_{new Random().Next(0, 200)}.pdf";
 
-                case FileNameOptionEnum.Merge:
+                case FileNameOptionEnum.Combine:
                     return GetFilePath(fullFileName, useDefaultPath) + $"{fullFileName.Split("\\").Last().TrimEnd(".pdf".ToCharArray())}_merge_{new Random().Next(0, 200)}.pdf";
 
-                case FileNameOptionEnum.Encrypt:
+                case FileNameOptionEnum.Protect:
                     return GetFilePath(fullFileName, useDefaultPath) + $"{fullFileName.Split("\\").Last().TrimEnd(".pdf".ToCharArray())}_encrypt_{new Random().Next(0, 200)}.pdf";
 
                 case FileNameOptionEnum.Compress:
@@ -120,8 +120,8 @@ namespace BasicPdfWebApp.Utils
     {
         Edit = 1,
         Copy = 2,
-        Merge = 3,
-        Encrypt = 4,
+        Combine = 3,
+        Protect = 4,
         Compress = 5,
         Convert = 6
     }
