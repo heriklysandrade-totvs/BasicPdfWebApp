@@ -5,12 +5,15 @@ using System.Threading.Tasks;
 
 namespace BasicPdfWebApp.Models
 {
-    public class FileItemDTO
+    public class FileItemDTO : BaseDTO
     {
         public int Id { get; set; }
 
         //public Guid Guid { get; set; }
 
         public string FileFullPath { get; set; }
+
+        public string FileName { get; set; }
+
     }
 }

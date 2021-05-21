@@ -1,7 +1,9 @@
 ﻿using BasicPdfWebApp.Models;
+using BasicPdfWebApp.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -17,6 +19,7 @@ namespace BasicPdfWebApp
             services.AddDbContext<FileContext>(opt =>
                opt.UseInMemoryDatabase("TodoList"));
 
+            services.AddTransient<IFileActionsService, FileActionsService>();
             services.AddControllers();
         }
 

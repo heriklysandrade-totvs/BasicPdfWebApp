@@ -4,12 +4,15 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BasicPdfWebApp.Models;
+using Microsoft.AspNetCore.Http;
+using System;
+using BasicPdfWebApp.Utils;
 
 namespace BasicPdfWebApp.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class FileController : ControllerBase
+    public class FileController : InternalBaseController<FileItemEntity, FileItemDTO>
     {
         private readonly FileContext _context;
 
@@ -81,11 +84,8 @@ namespace BasicPdfWebApp.Controllers
         [HttpPost]
         public async Task<ActionResult<FileItemDTO>> PostFileItem(FileItemDTO fileItemDTO)
         {
-            var fileItem = new FileItem
-            {
-                Id = fileItemDTO.Id,
-                FileFullPath = fileItemDTO.FileFullPath
-            };
+            var fileItem = new FileItemEntity();
+            iMapper.Map(fileItemDTO, fileItem);
 
             _context.FileItems.Add(fileItem);
             await _context.SaveChangesAsync();
@@ -94,6 +94,25 @@ namespace BasicPdfWebApp.Controllers
                 nameof(GetFileItem),
                 new { id = fileItem.Id },
                 ItemToDTO(fileItem));
+        }
+
+        [HttpPost("new")]
+        public FileItemDTO PostFileItem([FromForm] IFormFile inputFormFile)
+        {
+            var formFile = Request.Form.Files[0];
+
+            var fileItemEntity = new FileItemEntity()
+            {
+                Id = new Random().Next(0, 200),
+                Guid = new Guid(),
+                Bytes = formFile.GetBytesFromFormFile(),
+                FileName = formFile.FileName
+            };
+
+            var fileItemDTO = new FileItemDTO();
+            iMapper. Map(fileItemEntity, fileItemDTO);
+
+            return fileItemDTO;
         }
 
         // DELETE: api/File/5
@@ -117,11 +136,11 @@ namespace BasicPdfWebApp.Controllers
             return _context.FileItems.Any(e => e.Id == id);
         }
 
-        private static FileItemDTO ItemToDTO(FileItem todoItem) =>
+        private static FileItemDTO ItemToDTO(FileItemEntity fileItem) =>
             new FileItemDTO
             {
-                Id = todoItem.Id,
-                FileFullPath = todoItem.FileFullPath
+                Id = fileItem.Id,
+                FileFullPath = fileItem.FileFullPath
             };
     }
 }

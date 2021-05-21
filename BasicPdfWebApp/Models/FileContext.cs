@@ -1,8 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace BasicPdfWebApp.Models
 {
@@ -14,6 +10,8 @@ namespace BasicPdfWebApp.Models
 
         }
 
-        public DbSet<FileItem> FileItems{ get; set; }
+        public DbSet<FileItemEntity> FileItems{ get; set; }
+
+        public DbSet<FileItemDTO> FileItemDTO { get; set; }
     }
 }
