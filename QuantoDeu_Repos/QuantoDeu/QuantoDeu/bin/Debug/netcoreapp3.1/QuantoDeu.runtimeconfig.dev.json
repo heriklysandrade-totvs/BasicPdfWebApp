@@ -1,8 +1,0 @@
-{
-  "runtimeOptions": {
-    "additionalProbingPaths": [
-      "C:\\Users\\Heriklys\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Heriklys\\.nuget\\packages"
-    ]
-  }
-}
